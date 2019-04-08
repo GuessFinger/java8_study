@@ -38,3 +38,92 @@
 - 还有一点就是接口现在有默认方法了
 - 新增加了一个类 optional<T> 专门处理null的
 - 还有就是多线程的一些讲解内容
+
+#### 2019年4月8日20:03:35
+- day02
+- 在软件开发的过程中，不管你做什么，需求肯定是会发生变化的，这个是很正常的事情。想想过去一年在做这个项目的时候
+    其中的需求也是经常发生变化的。回来来说这个事情的话，我自己是没有好好考虑这个东西的 就只一直在说可拓展性
+    方便后续维护以及拓展 
+- 针对上面的问题 在java8中就提出一个概念：行为参数化 帮助你处理频繁变更的需求的一种软件开发模式 这个就可以理解为
+    把共同的处理，抽取成一个方法 然后具体的不同业务实现的代码当做一个参数传递到共同的代码处
+
+- 具体的实例参照 day02其中的testFilter.java
+- lambda表达式的学习 通过day2里面的代码 我们有在其中使用匿名类来处理 但是效果不好 因为有比较多的啰嗦代码
+    在java8中我们引入了一个新工具 lambda表达式 现在你可以把lambda表达式看做匿名功能
+
+1. lambda管中窥豹
+- 可以把lambda理解为简洁的可传递的匿名函数的一种方式：它没有名称 但是它有参数列表 函数主体 返回类型 可能还有一个
+    可以抛出异常的异常列表
+- 匿名：因为它不想普通的方法一样拥有名称
+- 函数：我们说它是函数 因为lambda不想方法那样属于某个类 但和方法一样 拥有参数列表 函数主题 返回类型 以及异常列表
+- 传递：lambda表达式可以作为参数传递给方法或者存储在变量中
+- 简洁：无需像匿名函数一样写很多的模板函数
+![comparator使用lambda与否](./images/comparator使用lambda与否.png)
+- 对上面的图形进行说明
+    参数列表-这里它采用了Comparator中compare方法的两个参数 两个Apple
+    箭头 把参数和函数主体进行分割
+    lambda主体 比较两个Apple的重量 表达式就是lambda的返回值
+![5种有效的lambda表达式](./images/5种有效的lambda表达式.png)
+
+- java语言设计者为什么选择这种形式的语法，因为C# 和Scala等语言中类型的功能非常的受欢迎
+```
+    // lambda表达式的基本语法 这里你需要进行理解 你可以查看上面的5种有效的lambda表达式
+    {parameters} -> expression
+    {parameters} -> {statements;}
+```
+![正确的lambda表达式1](./images/正确的lambda表达式1.png)
+![正确的lambda表达式2](./images/正确的lambda表达式2.png)
+- 只要有显示的return 那么你一定要{} 进行包裹
+
+- 在哪里能用到lambda表达式呢？
+`filter(new ArrayList<Apple>(),(Apple apple) -> "red".equals(apple.getColor())`
+- 接下进行学习函数式接口
+```java
+    // 什么是函数式接口呢？只定义一个抽象方法的接口
+    // 像我们之前谈到的Comparator 和Runnable都是函数式接口     
+    public interface Predicate{
+        boolean test (T t);
+    }
+    
+    public interface  Comparator<T>{
+        int compare(T o1,T o2);
+    }
+    
+    public interface  Runnable{
+        void run();
+    }
+    // 这个不是函数式接口 因为它定义了两个add的抽象方法 其中一个是从Adder中继承的    
+    public interface SmartAdder extends Adder{
+        int add(double a, double b);
+    }
+
+```
+- 那么函数式接口可以用来干什么呢？
+- Lambda表达式允许你直接以内联的形式为函数式接口的抽象方法提供实现 并把整个表达式作为函数式接口的实例
+    (具体来说 是函数式接口的一个具体实现的实例) 当然你也可以用匿名函数的方式进行实现 只不过比较笨拙
+```
+    // 使用匿名函数
+    Runnable r1 = new Runnable(){
+        public void run(){
+            System.out.println("hello world 2");         
+        }
+    }
+    // 使用lambda表达式
+    // 这里进行一下说明 我记得上面在System.out..这里是需要添加{} 但是idea自带的提示表示可以不用进行添加
+    // 基本的原则是可以掌握的 如果不知道的话 那么就用idea的只能提示把！ 或者返回值是void的时候也可以省略
+    Runnable r2 = () -> System.out.println("hello world 1");
+```
+
+- 函数式描述
+- 函数式接口的抽象方法的签名基本上就是lambda表达式的签名 我们将这种抽像方法叫做函数描述符例如， 
+Runnable 接口可以看作一个什么也不接受什么也不返回（ void ）的函数的
+签名，因为它只有一个叫作 run 的抽象方法，这个方法什么也不接受，什么也不返回（ void ）。
+我们在本章中使用了一个特殊表示法来描述Lambda和函数式接口的签名。 () -> void 代表
+了参数列表为空，且返回 void 的函数。这正是 Runnable 接口所代表的。 举另一个例子， (Apple,
+Apple) -> int 代表接受两个 Apple 作为参数且返回 int 的函数。我们会在3.4节和本章后面的
+表3-2中提供关于函数描述符的更多信息
+
+- 上面说的内容我简单理解一下就是 你写的lambda表达式 必须和函数式接口的抽象方法类型
+- 函数式接口有参数  有具体的返回   那么你lambda必须符合这个规则 (参数列表) -> {返回值}
+![哪里可以使用lambda表达式](./images/哪里可以使用Lambda.png)
+
