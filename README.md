@@ -127,3 +127,56 @@ Apple) -> int 代表接受两个 Apple 作为参数且返回 int 的函数。我
 - 函数式接口有参数  有具体的返回   那么你lambda必须符合这个规则 (参数列表) -> {返回值}
 ![哪里可以使用lambda表达式](./images/哪里可以使用Lambda.png)
 
+#### 2019-4-9 20:18:20
+- day03
+- 把lambda表达式付诸实践
+- 资源处理(处理文件/数据库)时候 最常见的模式就是打开一个资源 做一些处理 然后关闭资源 这些设置和清理阶段
+    总是很相似的 并且会围绕着执行处理的那些重要代码 这就是所谓的环绕执行模式
+![java装箱拆箱](./images/java装箱拆箱.png)
+---
+![lambda中的装箱](./images/lambda中的装箱.png)
+---
+![常用函数式接口1](./images/常用函数式接口1.png)
+---
+![常用函数式接口2](./images/常用函数式接口2.png)
+---
+![lambda表达式以及函数式接口实例](./images/lambdas及函数式接口的例子.png)
+
+- 什么是checked exception?  举个例子：文件的读取 可能你的程序没有任何问题 但是有可能因为文件不存在导致异常
+    这时候文件的读取你必须进行try catch 这个就是checked exception
+---
+![lambda怎么处理异常](./images/lambda怎么处理exception.png)
+---
+- 我认为这个很有利于你理解
+![lambda表达式怎么进行类型检查的](./images/lambda表达式怎么进行类型检查的.png)
+
+- 这里有一点学习一下 就是菱形运算符 利用泛型推断从上下文推断类型的思想 这么说可能不太理解
+- 后面的ArrayList 就没有显示的指定类型 就是从前面进行推断出来的
+`List<Integer> list1 = new ArrayList<>()`
+- 特殊的void兼容规则 如果一个lambda的主体是一个表达式 它就和一个返回void的函数描述符兼容
+    当然需要参数列表也兼容 这个是神意思呢？
+```
+    // 按理说list.add()返回的是一个boolean类型的 不能用Consumer  
+    // 但是因为上面规则的说明 如果是一个表达式 那么它就和一个返回void的函数描述符兼容
+    Predicate<String> p = s -> list.add(s);
+    Consumer<String> c = s -> list.add(s);
+```
+
+- 类型推断：也就是我们在写lambda表达式的时候 我们不需要显示的指定参数类型 可以从前面的类型进行推断出来
+    如果添加上类型，还是不添加类型这个需要让程序员自己决定
+```
+    // 这个就是没有显示指明a的类型
+    List<Apple> filterList = filter(List<Apple> appleList,a -> a.getWeigth() > 15);
+    // 一个显示 另一个与之相反
+    Comparator<Apple> c = (Apple a1,Apple a2) -> a1.getWeight().compareTo(a2.getWeight());
+    Comparator<Apple> d = (a1,a2) -> a1.getWeight().compareTo(a2.getWeight());
+```
+
+- 学习一个概念 闭包
+[闭包解释](http://www.ruanyifeng.com/blog/2009/08/learning_javascript_closures.html)
+
+- 成员变量存储在堆中 局部变量存储在栈中 对于闭包的一些理解能更好的理解下面的内容
+![lambda中局部变量的说明1](./images/lambda表达式中的局部变量说明1.png)
+![lambda中局部变量的说明2](./images/lambda表达式中的局部变量说明2.png)
+
+
