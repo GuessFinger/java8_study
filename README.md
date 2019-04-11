@@ -180,3 +180,32 @@ Apple) -> int 代表接受两个 Apple 作为参数且返回 int 的函数。我
 ![lambda中局部变量的说明2](./images/lambda表达式中的局部变量说明2.png)
 
 
+#### 2019年4月11日15:11:10
+- day04
+- 方法的引用 如果一个Lambda代表的只是“直接调用这个方法”，那最好还是用名称
+来调用它，而不是去描述如何调用它。事实上，方法引用就是让你根据已有的方法实现来创建
+Lambda表达式。但是，显式地指明方法的名称，你的代码的可读性会更好。当你需要使用方法引用时，目标引用放在分隔符 :: 前，方法的名称放在后面
+`Apple::getWeight`
+![lambda及其等效方法引用](./images/lambda及其等效方法引用的例子.png)
+
+- 如何构建方法引用
+1.指向静态方法的方法引用(例如Integer的parseInt方法 写作Integer::parseInt);
+2.执行任意类型实例方法的方法引用(比如String的length方法,写作String::length);
+3.指向现有对象的实例方法额方法引用(假设有一个变量XXX,用于存放xxx类型的对象，它支持实例方法getValue 那么你就可以写作XXX::getValue)
+
+类似的String::length 这种方法的引用思想就是你在引用一个对象的方法 而这个对象本身就是Lambda的一个参数
+例如表达式(String s) -> s.toUppercase() 可以写作String::toUppercase.
+你在lambda中调用一个已经存在的外部对象中的方法
+例如表达式() -> xxx.getValue()  可以写作 xxx::getValue
+
+![图说lambda方法引用的3种方式](./images/图说3种lambda表达式方法引用.png) 
+
+- 构造函数引用
+对于一个现有的构造函数，你可以利用它的名称和关键字new来创建一个它引用
+className::new 
+- 例如 假设有一个构造函数没有参数 它社和Supplier的签名 () -> Apple 我可以这样做
+Supplier<Apple> c1 = Apple::new;(构造函数引用指向默认的Apple()的构造函数)
+Apple a1 = c1.get();(调用supplier的get方法将产生一个新的Apple,注意这个get是supplier的默认方法 就和 predicate的test Consumer的accept function的apply)
+等价于
+Supplier<Apple> c1 = () -> new Apple();
+Apple a1 = c1.get();
