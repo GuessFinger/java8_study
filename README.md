@@ -209,3 +209,56 @@ Apple a1 = c1.get();(调用supplier的get方法将产生一个新的Apple,注意
 等价于
 Supplier<Apple> c1 = () -> new Apple();
 Apple a1 = c1.get();
+
+#### 2019-4-15 22:14:10
+- day04
+
+如果你的构造函数的签名是Apple(Integer weight) 那么它就适合Function接口 它是这样写的
+Function<Integer,Apple> c2 = Apple::new;
+Apple a2 = c2.apply(120);
+等价于
+Function<Integer,Apple> c2 = (weight) -> new Apple(weight)
+Apple a2 = c2.apple(weight);
+```
+    // 一个由Integer构成的List每个元素都通过我们之前定义的map传递给Apple的构造函数
+    List<Integer> weights = Arrays.asList(7,4,3,10);
+    List<Apple> apples = map(weights,Apple::new);
+    public static List<Apple> map(List<Integer> list,Function<Integer,Apple> f){
+        List<Apple> result = new ArrayList<>();
+        for(Integer e : list){
+            result.add(f.appley(e));
+        }
+        return result;
+    }
+    // 如果你有一个具有两个参数的构造函数Apple(String color,Integer weight) 那么它适用于BigFunction接口的签名
+    BigFunction<String,Integer,Apple> c3 = Apple::new;
+    Apple a3 = c3.apple("green",120);// 这个就创建出一个新的Apple对象
+    这个就等价于
+    BigFunction<String,Integer,Apple> c3 = (color,weight) -> new Apple(color,weight);
+    Apple a3 = c3.apple("green",120);
+    
+    // 你可以使用 Map来将构造函数映射到字符串值。你可以创建一个 giveMeFruit 方法，
+    给它一个 String 和一个Integer ，它就可以创建出不同重量的各种水果：
+    static Map<String,Function<Integer,Fruit>> map = new HashMap<>();
+    static{
+        map.put("apple",Apple::new);
+        map.put("orange",Orange::new);
+        // etc ..
+    }
+    public static Fruit giveMeFruit(String fruit,Integer weight){
+        return map.get(fruit.toLowerCase()).apply(weight);
+    }
+```
+
+- 复合lambda表达式的有用方法
+- 这个的意思就是 你可以把多个简单的lambda表达式复合成复杂的表达式。你可以让两个谓词之间做一个 or 操作，
+组合成一个更大的谓词。而且，你还可以让一个函数的结成为另一个函数的输入。 这里有一个重点就是我们都是用的是
+默认的方法 详细信息请后面会进行介绍
+
+- 比较器复合
+```
+    // 我们签名用到了一个Comparator.comparing()用于提取比较键值的Function 来返回一个Comparator
+    Comparator<Apple> c1 = Comparator.comparing(Apple::getWeight);
+    
+
+```
