@@ -337,3 +337,24 @@ Apple a2 = c2.apple(weight);
     这差不多就是Java 8引入流的理由了——Streams库的内部迭代可以自动选择一种适
     合你硬件的数据表示和并行实现。
 ![内部迭代和外部迭代](./images/内部迭代和外部迭代.png)
+
+- 流操作
+```
+    List<String> names = menu.stream()
+                             .filter(d -> d.getCalories() > 300)
+                             .map(Dish::getName)
+                             .limit(3)
+                             .collect(toList());
+    // 我们可以看到两类操作
+    // filter map limit 可以连接成一个流水线
+    // collect 触发流水线执行并关闭它
+    // 可以连接起来的流操作称之为中间操作 关闭流的操作我们称为终端操作
+```
+
+- 中间操作：诸如filter sorted 等中间操作会返回一个流 让多种操作可以链接起来形成一个查询 除非流水线上
+    触发一个终端操作 否则中间操作不会执行任何处理(他们很懒) 这是因为中间操作一般都可以合并起来 
+    在终端操作一次性全部处理
+![中间操作](./images/中间操作.png)
+- 终端操作：终端操作会从流的流水线生成结果，其结果是任何不适流的值 比如List Integer void 等等
+`menu.stream().foreach(System.out::print)`
+![简单使用流](./images/简单使用流.png)
