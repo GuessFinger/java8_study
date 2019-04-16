@@ -255,10 +255,85 @@ Apple a2 = c2.apple(weight);
 组合成一个更大的谓词。而且，你还可以让一个函数的结成为另一个函数的输入。 这里有一个重点就是我们都是用的是
 默认的方法 详细信息请后面会进行介绍
 
-- 比较器复合
-```
-    // 我们签名用到了一个Comparator.comparing()用于提取比较键值的Function 来返回一个Comparator
-    Comparator<Apple> c1 = Comparator.comparing(Apple::getWeight);
-    
+
+#### 2019年4月16日20:29:49
+- day05
+- 前提说明 很多的业务逻辑都涉及数据库的操作  如果我们有一个菜的集合 我要筛选出有哪些菜的能量是比较低的
+    可能之前我的操作就是进行迭代处理 如果我们使用SQL的话 就更加方便了  这里只是一个引子
+- 流是什么？
+- 流是java API的新成员 它允许你以声明式的方式处理数据集合（通过查询语句来表达 而不是临时编写一个实现）
+- 现在浅显的理解就是把它看做一个遍历数据集的高级迭代器
+
+- 流到底是什么？剪短的定义就是 **从支持数据操作处理的源生成的元素序列**
+- 元素序列：就像集合一样 流也提供了一个接口 可以访问特定元素类型的一组有序值 集合的目的在于以特定的时间
+    /空间复杂度存储和访问元素 但是流的目的是计算 比如之前的filter map sorted
+- 源 流会使用一个提供数据的源 比如集合 数组 输入输出资源 请注意从有序集合生成流时会保留原有的顺序
+- 数据处理操作 流的数据处理功能类似于数据库的操作 filter map reduce find 等等 流可以顺序执行也可以并行执行
+
+- 流操作有两个重要的特点
+- 流水线 很多流操作本身也返回一个流 这样多个操作就可以连接起来 形成一个大的流水线
+- 内部迭代 与使用迭代器显式的迭代不同 流的迭代操作是在背后 进行的 
 
 ```
+    // 其中menu表示的是现有的菜单
+    List<String> threeHighCaloriesList = 
+        menu.stream()
+        .filter(d -> d.getCalories() > 300)  // 过滤热量大于300的
+        .map(Dish::getName)         // 取菜名称
+        .limil(3)                   // 只去前3个
+        .collect(toList());         // 保存在另一个数组中
+    // 说明 我们先对menu进行stream()处理 得到一个流 数据源是菜肴列表
+    // 除了collect之外 其余的都是返回一个流 这样他们就形成了一条流水线
+    // 你可以这么理解 链中的方法都在排队等待 直到调用collect方法
+
+```
+![菜单流处理实例](./images/菜单流处理实例图1.png)
+- filter 接受lambda表达式 从流中排除某些元素 lambda d -> d.getCalories() > 300
+- map 将元素转为其他形式或者提取信息 Dish::getName  相当于 Dish dish -> {return dish.getName()}
+- limit 截断流 使元素不超过给定的数量
+- collect 将流转换为其他的形式 这里简单说明就是 将流中元素累积成一个汇总的结果的操作
+
+![流和集合的区别1](./images/流和集合区别1.png)
+![流和集合的区别2](./images/流和集合区别2.png)
+![流和集合的区别3](./images/流和集合区别3.png)
+
+- 只能遍历一次：流和迭代器类似 流只能遍历一次，遍历完之后 我们就说这个流已经被消费掉了
+    但是你可以重新获得一个新的流来重新遍历一遍  另一个区别就是他们遍历数组的方式
+```
+    List<String> title = Arrays.asList("java8", "in", "action");
+    Stream<String> s = title.stream();
+    s.forEach(System.out::println);
+    s.forEach(System.out::println);
+    // 像这个就睡报一个错误 表示的额就是流已经被操作过了或者关闭
+    Exception in thread "main" java.lang.IllegalStateException: 
+        stream has already been operated upon or closed
+
+```
+- 内部迭代和外部迭代
+- 使用Collection需要用户去做迭代(foreach) 这种我们成为之外部迭代 相反stream库是内部迭代
+```
+    // 我们使用foreach进行迭代 这个是一个语法糖 它的背后使用的是Iterator对象展现出来的更丑陋
+    List<String> names = new ArrayList<>();
+    for(Dish d : menu){
+        names.add(d.getName());
+    }
+    // 用集合背后的Iterator进行迭代
+    List<String> names = new ArrayList<>();
+    Iterator<String> iterator = menu.iterator();
+    while(iterator.hasNext()){
+        Dish d = iterator.next();
+        names.add(d.getName());    
+    }
+    // 我们使用内部迭代
+    List<String> names = menu.stream()
+                              .map(Dish::getName)
+                              .collect(toList());
+    // 可以查看到 这个的处理过程更加的方便
+
+```
+
+- 如果是外部的迭代处理的话  我们需要显式的进行迭代后 再对每个项目进行处理 如果你用内部迭代的话
+    只要告诉我最终你要处理成什么样子 至于你先处理哪一个 这个由你自己决定 
+    这差不多就是Java 8引入流的理由了——Streams库的内部迭代可以自动选择一种适
+    合你硬件的数据表示和并行实现。
+![内部迭代和外部迭代](./images/内部迭代和外部迭代.png)
