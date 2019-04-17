@@ -358,3 +358,246 @@ Apple a2 = c2.apple(weight);
 - 终端操作：终端操作会从流的流水线生成结果，其结果是任何不适流的值 比如List Integer void 等等
 `menu.stream().foreach(System.out::print)`
 ![简单使用流](./images/简单使用流.png)
+
+#### 2019年4月17日09:50:52
+- 使用流
+![谓词](./images/谓词.png)
+- 先学习筛选和切片：用谓词筛选 筛选出不相同的元素 忽略流中头几个元素 或者将流截短至指定长度
+
+- 用谓词筛选
+stream支持filter方法 该操作会接受一个谓词(一个返回值为boolean值的函数) 作为参数 并返回一个所有符合谓词元素的流
+`List<Dish> vegetarianMenu = menu.stream().filter(Dish::isVegetarian).collect(toList())`
+![用谓词筛选流](./images/用谓词筛选一个流.png)
+
+- 筛选各异的元素
+- 流还支持distinct的方法，它会返回一个元素各异(根据流生成元素的equals和hashCode方法实现)的流
+- 上面的潜台词就是 你如果你筛选自定义的类的时候 注意重新定义equals 和hashCode方法
+```
+    // 筛选出所有的偶数 并确保没有重复
+    List<Integer> numbers = Arrays.asList(1,2,3,4,5,3,3,2,2);
+    numbers.stream()
+           .filter(r -> r % 2 == 0)
+           .distinct()
+           .foreach(System.out::print);
+```
+![筛选流中的各异元素](./images/筛选流中各异的元素.png)
+
+- 截短流 
+- 流支持limit(n)方法 该方法返回一个不超过给定长度的流
+```
+    // 返回超过300卡路里的前三道菜
+    List<Dish> dishs = menu.stream()
+                           .filter(d -> d.getCalories() > 300)
+                           .limit(3)
+                           .collect(toList());
+    // 如果流是有序的 则最多返回前n个元素 如果是流是一个set(无序的) 那么久只会返回n个 但是没有顺序
+```
+![截短流](./images/截短流.png)
+
+
+- 跳过元素
+- 流还支持skip(n) 方法 返回一个扔掉前n个元素的流  如果流中不足n个元素 则返回一个空流
+```
+    // 目标找到卡路里大于300 并且跳过前两道菜
+    List<Dish> dishes = menu.stream()
+                            .filter(d -> d.getCalories() > 300)
+                            .skip(2)
+                            .collect(toList());
+```
+![在流中跳过元素](./images/在流中跳过元素.png)
+
+```
+    // 筛选前两个荤菜
+    List<Dish> dishes = menu.stream()
+                            .filter(d -> d.getType() == Dish.Type.Meat)
+                            .limit(2)
+                            .collect(toList());
+```
+
+- 映射：一个非常常见的数据处理套路就是从某些对象中选中信息 比如在SQL中 你可以从列表中选取某一个列
+
+- 对流中的每一个元素应用函数：流支持map方法 它会支持一个函数作为参数，它会接受一个函数作为参数。这个函数会被应用到每个元素上，并将其映
+射成一个新的元素（使用映射一词，是因为它和转换类似，但其中的细微差别在于它是“创建一 个新版本”而不是去“修改”）。
+```
+    // 因为getName返回的是一个String  所以.map 返回的是一个Stream<String>
+    List<String> dishNames = menu.stream()
+                                  .map(Dish::getName)
+                                  .collect(toList())
+                                  
+   // 给定一个单词列表 返回另一个列表 显示每个单词中有几个字母
+    List<String> list1 = Arrays.asList("java8", "in", "action");
+            list1.stream()
+                    .map(String::length)
+                    .collect(Collectors.toList())
+                    .stream()
+                    .forEach(System.out::println);
+                    
+    // 找出每道菜名称有多长
+    List<Integer> list2 = menu.stream()
+                               .map( r -> r.getName().length())
+                               .collect(toList());
+    // 这种方式更容易理解一点
+    List<Integer> list3 = menu.stream()
+                                .map(Dish::getName)
+                                .map(String::length)
+                                .collect(toList());
+```
+
+
+- 流的扁平化处理
+```
+    // 对于一张单词列表 找到其中各不相同的字符
+    List<String> list = Arrays.asList("hello", "world");
+        list.stream()
+            .map(word -> word.split(""))
+            .distinct()
+            .collect(toList());
+    // 查看书中的描述 发现这个其实有问题的  最终得不到想要的结果 你传递给map后 得到的是Stream<String[]>
+    // 你真正想要的是Stream<String>
+```
+![不正确的流处理](./images/不正确的流处理结果.png)
+
+```
+    // 尝试使用map和Arrays.stream()
+    // 首先你需要一个字符流，而不是一个数组流 有一个Arrays.stream()的方法可以接受一个数组并产生一个流
+    String[] arrayOfWords = {"hello","world"};
+    Stream<String> streamOfworlds = Arrays.stream(arrayOfWords);
+    // 把它放到流水线里面
+    words.stream()
+            .map(word -> word.splice(""))
+            .map(Arrays::stream)   // 这里每个数组变成一个单独的流
+            .distinct()
+            .collect(toList());
+    // 当前解决方案仍然不够  这是因为 你现在得到的是一个流的列表 也就是这里依旧是两个流
+    // 我们可以使用flatMap来解决这个问题
+    List<String> uniqueCharacters = words.stream()
+                                            .map(word -> word.splice(""))
+                                            .flatMap(Arrays::stream)
+                                            .distinct()
+                                            .collect(toList());
+    // 上面简单解释一下就是 所有使用flatMap(Arrays::stream)将map生成的单个流都被合并起来了 扁平化成为一个流
+```
+![flatMap处理流](./images/flatMap处理流.png)
+- 我想 flatMap最好的解释就是上面这个场景 两个单词 查找出没有重复的字符  你不明白的话可以简单想一下这个
+
+- 查找和匹配：另一个常见的数据处理套路就是看看 数据集中是否匹配一个给定的元素
+
+- 检查谓词是否至少匹配一个元素
+```
+    // anyMatch方法可以回答"流中是否有一个元素能匹配给定的谓词"  
+    // 你可以查看菜单里面是否有素食可选择
+    if(menu.stream().anyMatch(Dish::isVegetarian)){
+        System.out.println("这个是一个vegetarian");
+    }
+    // 通过实践可以了解到 anyMatch里面放置的是谓词  anyMatch后面再不能跟任何的.a 之类的操作 返回的是一个boolean类型的值
+    // 表示的意义就是 在指定的元素中是否有满足要求的元素  有的话 就是true
+    // 这个场景就和项目中的  只要这个图形中有柱状图 那么标志位就直接变成true 使用的前端的_.find(function(){})
+   
+```
+
+- 检查谓词是否匹配所有的元素：它会看看流中的元素是否都能匹配给定的谓词
+```
+    boolean isHealthy = menu.stream()
+                             .allMatch(r -> r.getCalories() < 100);
+
+```
+- 与allMatch相对的就是nonMatch 它可以确保流中没有任何元素与给定的谓词匹配
+```
+    boolean isHealthy = menu.stream()
+                            .nonMatch(r -> r.getCalories() >= 1000);
+```
+- 简短说明一下 上面素有的anyMatch allMatch nonMatch 都用到了java中短路
+
+- 查找元素
+- findAny方法返回当前流中的任意元素 它可以与其他流操作结合使用
+```
+    // 你可能想找到一道素食菜肴
+    Optional<Dish> dish = menu.stream()
+                                .filter(Dish::isVegetarian)
+                                .findAny();
+    // 利用短路找到结果后立即结束
+    
+```
+
+- Optional类介绍
+- Optional<T> (java.util.Optional) 是一个容器类 代表一个值存在或不存在 引入这个类的目的是 避免和null检查相关的bug
+- 介绍其中的一些方法
+```
+    // isPresent() 将在Optional包含值的时候返回true  否则返回false
+    // ifPresent(Consumer<T> block) 会在值存在的时候执行给定的代码块
+    // T get() 会在值存在时返回值 否则抛出一个异常 NoSuchElement异常
+    // T orElse(T other) 会在值存在是返回值 否则返回一个默认值
+    
+    // 我们显式的判断Optoinal中是否有元素
+    menu.stream()
+        .filter(Dish::isVegetarian)
+        .findAny()
+        .isPresent();
+```
+
+- 查找第一个元素：出现一个有顺序的流 我们可能需要查找出第一个元素
+```
+    // 给出一个数字列表 找到第一个平方数能被3整除数 在代码中进行了实践
+    // findAny 和 findFirst 他们之间的区别是并行  findFirst在并行上限更高 并行这个概念后面会学习
+
+```
+
+- 归约
+- 到目前为止 所用到的终端操作 boolean(allMatch anyMatch nonMatch) void(foreach) Optional(findAny) 还有 .collect(toList())
+- 接下来的学习是 如何把一个流中元素组合起来 使用reduce操作来表达更复杂的查询  比如计算菜单中的所有卡路里
+    或者菜单中卡路里最高的是哪一个菜  这样的查询可以被归类为归约操作（将流归约成一个值）。
+    用函数式编程语言的术语来说，这称为折叠（fold），因为你可以将这个操作看成把一张长长的纸（你的流）
+    反复折叠成一个小方块，而这就是折叠操作的结果。
+    
+- 元素求和
+```
+    // reduce 接受两个参数 一个是初始值0 另一个是BinaryOperator<T> 将两个元素结合起来产生一个新的值
+    lambda (a , b) -> a + b
+    lambda (a , b) -> a * b
+    int sum = list.stream().reduce(0, (a , b) -> a + b);
+    // 这里右说了一个静态辅助方法 sum 来对两个数字求和  之前有一个静态辅助方法Comparator.comparing()
+    int sum = list.stream.reduce(0,Integer::sum);
+```
+![reduce对流中数字求和](./images/reduce对流中数字求和.png)
+
+- reduce还有一个重载的变体 它不接受任何初始值 但是会返回一个Optional对象
+`Optional<Integer> sum = numbers.stream().reduce(Integer::sum);`
+- 考虑流中没有任何元素的情况。 reduce 操作无 法返回其和，因为它没有初始值。这就是为什么结果被包裹在一个 Optional 对象里，以表明和可能不存在
+- 简单了解了一下 虽然这个没有默认值 虽然没有默认值 但是会根据前面的类型  给定一个默认值把
+- 同样的我们可以使用静态辅助方法来获得最大值和最小值
+```
+    int maxValue = list.stream().reduce(Integer::max);
+    int minValue = list.stream().reduce(Integer::min);
+    // 没有初始值的sum  / max /min  这些返回的都是一个Optional类型的值 类似：Optional[45]
+    // 当然我们里面也可以写三元表达式
+    int maxValue = list.stream().reduce((x , y) -> x > y ? x : y);
+```
+![reduce计算最大值](./images/reduce计算最大值.png)
+----
+![规约和并行](./images/规约与并行.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

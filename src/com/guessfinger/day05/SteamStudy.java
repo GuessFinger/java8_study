@@ -64,5 +64,10 @@ public class SteamStudy {
         // 1 让开发者读起来代码是非常的简洁的 2 表述的意思是非常明显的 3 还有一点就是它处理线程这一块
         // 后面会进行学习的
 
+        // 获取每个菜名称的长度
+        originalList.stream()
+                    .map(r -> r.getName().length())
+                    .forEach(System.out::println);
+
     }
 }
