@@ -575,17 +575,109 @@ stream支持filter方法 该操作会接受一个谓词(一个返回值为boolea
 ![reduce计算最大值](./images/reduce计算最大值.png)
 ----
 ![规约和并行](./images/规约与并行.png)
+---
+![有状态和无状态](./images/有状态和无状态.png)
+---
+![中间操作和终端操作](./images/中间操作和终端操作.png)
 
+#### 2019年4月18日09:22:07
+- day07
+- 第一部分的测试题在TraderAndTransactionTest中已经完成
 
+- 数组流
+![引入原始类型流的目的](./images/引入原始类型流的目的.png)
 
+- java8中引入了三个原始类型特化流来解决上面的问题 IntStream DoubleStream LongStream 分别将流中的元素特化为int double long
+    从而避免了暗含的装箱成本。
+```
+    // 1.映射到数值流，将流转为特化版本的常用方法mapToInt mapToDouble mapToLong 这些方法和之前的map的工作方式是一样的
+    // 只不过他么返回的是一个特化的流 而不是Stream<T>
+    int calories = menu.stream()
+                        .mapToInt(Dish::getCalories)   // 这里返回的就是一个IntStream
+                        .sum();
+    // 这里需要说明 如果流是空的 这个sum的默认值是0 还有其他的方法 比如 max  min average 等等
+    
+    // 2.转换为对象流 同样一旦有了数值流 我们可能需要将它转成非特化流
+    IntStream intStream = menu.stream().mapToInt(Dish::getCalories); // 将stream转成数值流
+    Stream<Integer> stream = inStream.boxed();   // 将数值流转成Stream
+    
+    // 3. OptoinalInt 求和那个列子很简单 因为有一个默认值0  但是如果你要使用max的时候 那么这时候用0显然是不合适的
+    // 前面我们介绍了Optional<T> 存储一个存在或者不存在的容器 相对而言我们就可以用OptionalInt 来接受
+    // 用特化流产生的IntStream DoubleStream等等 比如
+    int max = menu.stream().mapToInt(Dish::getCalories).max(); // 这个肯定是是错误的 必须用OptionalInt来进行承接
+    OptionalInt max = menu.stream().mapToInt(Dish::getCalories).max();
+    // 如果没有一个默认值的话我们可以给定一个默认值
+    int mm = max.orElse(1);
+```
 
+- 数值范围 和数字打交道 我们经常会有一些需求  取一定的范围 java8引入了两个可以用于IntStream 和 LongStream的静态方法
+- 之前有两个静态辅助方法一个是Comparator.comparing()  还有一个.reduce(Integer::sum) 这两个方法
+- 这两个范围 range 和rangeClosed 这两个方法都是第一个参数接受起始值 第二个参数接受结束值 range不包含结束值 
+- rangeClosed包含结束值
+```
+    IntStream evenNumbers = IntStream.rangeClosed(1,100).filter(i -> i % 2 == 0);
+    System.out.println(evenNumbers.count());
+    // 注意上面哪一行代码是中中间操作 没有进行任何计算 后面的count() 是终端操作 会处理流
+    list.stream().mapToInt(Integer::intValue).range(1,100); // 这个是不能执行的 
+    // 有点想不明白 那这个IntStream 这个怎么用？ 我在项目中发他们是这样用的e
+    IntStream.rangeClosed(0, xxx.size()) 等等
+```
 
+- 创建勾股数
+```
+    // 什么是勾股数  就是满足勾股定理的数字  并且他们必须是整数
+    // 1.假设有人为你提供了 前两个数字 你怎么判断第三个数字符不符合要求
+    filte(b -> Math.sqrt(a * a + b * b) % 1 == 0)
+    // 把每个元素转换成一个勾股数呢
+    stream.filter(b -> Math.sqrt(a * a + b * b) == 0)
+            .map(b -> new Int[]{a , b ,Math.sqrt(a * a + b * b)});
+    // 我们现在预设的情况就是 a的值给定 但是b的值需要生成 前面我们看到IntStream.rangeClosed() 可以在给定区间内
+    // 生成一个数值流 我们可以用它来给B提供数值
+    Instream.rangeClosed(1,100)
+                .filter(b -> Math.sqrt(a * a + b * b) % 1 == 0)
+                .boxed()
+                .map(b -> new Int[]{a, b, Math.sqrt(a * a + b * b)});
+    // 刚才还在纠结上面额写法到底对不对呢？ 是对的 为什么我们要把IntStream流 调用boxed() 转成Stream<Integer> 流
+    // 因为IntStream流中的map方法只能为流中的每个元素返回一个int 我们可以用IntStream中的maptoObject的方法
+    // 这个方法会生成一个对象值流
+    Instream.rangeClosed(1,100)
+                .filter(b -> Math.sqrt(a * a + b * b) % 1 == 0)
+                                .mapToObj(b -> new Int[]{a, b, Math.sqrt(a * a + b * b)});
+    // 现在我们来给定a的值
+    Stream<int []> xxx =   Instream.rangeClosed(1,100).boxed()
+                                    .flatMap(a  ->
+                                    Instream.rangeClosed(a,100)
+                                    .filter(b -> Math.sqrt(a * a + b * b) % 1 == 0)
+                                    .mapToObj(b -> new int[]{a , b , Math.sqrt(a * a + b *b )}));
+    // flatMap 方法在做映射的同时，还会把所有生成的三元数流扁平化成一个流。这样你就得到了一个三元数流。
+    // 使用flatMap的一个关键词就是 扁平化  当时在字符串那里有一个很好的例子
+    // 我们还能做得更好吗？ 我们可以在拿到所有的元素以后 再进行过滤 判断t[2] 是否是整数
+```
 
+- 由值创建流
+- 我们可以通过静态方法Stream.of() 通过显示值创建一个流 它可以接受任意数量的参数
+```
+    Stream<String> stream = Stream.of("java8","lambda","in","action");
+    stream.map(String::toUpperCase).foreach(System.out::println);
+    // 当然 你也可以创建一个空流
+    Stream<String> emptyStream = Stream.empty();
+```
 
+- 由数组创建流
+- 我们可以使用静态方法Arrays.stream从数组中创建一个流 它可以接受一个数组作为参数 我们可以将一个int[] 数组转成IntStream
+    我们如果用Arrays.stream的话 只能接受int  long double 的数组 注意 
+```
+    int[] numbers = {2,3,4,5,6};
+    int sum = Arrays.stream(numbers).sum();
+```
 
+![文件生成流](./images/由文件生成流.png)
 
-
-
+- 由函数生成流：创建无限流
+- Stream API 提供了两个静态方法从函数生成流, Stream.iterator  Stream.generate 两个操作可以创建所谓的无限流 不像
+    从固定集合创建的流那样有固定大小的流 一般来说应该使用limit(n)来对这种流进行限制
+![Stream.iterator创建无限流](./images/Stream.iterator创建无限流.png)
+---
 
 
 
