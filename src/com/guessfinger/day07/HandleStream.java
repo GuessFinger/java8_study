@@ -1,10 +1,13 @@
 package com.guessfinger.day07;
 
 import java.util.Arrays;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * @Author : Mx
@@ -50,5 +53,21 @@ public class HandleStream {
         Stream.iterate(new int[]{0, 1}, t -> new int[]{t[1], t[0] + t[1]})
                 .limit(10)
                 .forEach(t -> System.out.println("(" + t[0] + " " + t[1] + ")"));
+
+        // 尝试用Collectors.summarizingInt(Integer::valueOf);
+        // 获取其中的值我们用getMax() 或者getMin() 等等这样的操作
+        List<Integer> list1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);
+        IntSummaryStatistics listStatistics = list1.stream().collect(Collectors.summarizingInt(Integer::valueOf));
+        System.out.println(listStatistics);
+        System.out.println(listStatistics.getMax());
+
+        //收集器之 joining()
+        List<String> list2 = Arrays.asList("java", "in", "action");
+        String list2String = list2.stream().collect(Collectors.joining());
+        System.out.println(list2String);
+        // 中间我们可以拼接一些你需要的字符
+        list2String = list2.stream().collect(Collectors.joining(", "));
+        System.out.println(list2String);
+
     }
 }

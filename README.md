@@ -679,10 +679,54 @@ stream支持filter方法 该操作会接受一个谓词(一个返回值为boolea
 ![Stream.iterator创建无限流](./images/Stream.iterator创建无限流.png)
 ---
 
+- 收集器学习
+- 为什么要有这个收集器的概念  它肯定是为了解决一定的问题 所以才有这个概念
+![为什么要有收集器这个概念](./images/为什么要引入收集器这个概念.png)
 
-
-
-
+- 上面一个例子可以很明显的看出来 函数式编程和指令式编程之间的区别  函数式编程希望的结果就是做什么
+      不关心你如何做 上面实现的过程中我们传递给collect() 方法的参数是Collector的一个实现
+      也就是给Stream中元素做汇总的方法  之前我们一直传递的是Collection.toList() 也就是
+      按顺序给每个元素生成一个列表
+      
+- 本章下面的内容主要讨论预定义收集器的功能 也就是哪些从Collections类提供的工厂方法 
+    主要有3大功能 将流元素规约和汇总为一个值 元素分组 元素分区
+    
+但凡要把流中所有的项目合并成一个结果的时候 我们就可以用归集器
+```
+    long homManyDished = menu.stream().collect(Collectors.counting());
+    long howManyDished = menu.stream().count();
+    
+```
+- 查找流中的最大值和最小值  我们可以使用两个收集器 Collectors.maxBy 和 Collections.minBy 
+    来计算流中的最大值和最小值 这两个收集器接受一个Comparator.comparing()参数
+```
+    Comparator<Dish> dishCaloriesComparator = Comparator.comparing(Dish::getCalores);
+    Optional<Dish> mostCaloriesDish = menu.stream()
+                                            .collect(maxBy(dishCaloriesComparator));
+    // 这里为什么要用Optional<Dish> 因为这个有可能是空 这个是一个有值或者没有值的容器
+    
+    // Collectors类专门为了汇总提供了一个工厂方法 Collectors.summingInt函数 它可以接受一个
+    // 把对象映射为求和所需int的函数 并返回给收集器  菜单列表的卡路里总热量
+    int totalCalories = menu.stream().collect(Collectors.summingInt(Dish::getCalories));
+    // 在遍历流的时候 会把每一菜映射为其的热量 然后把这个数字累加到一个累加器上  初始值是0
+    // Collectors.summingLong  和Collectors.summingDouble 是一样的效果
+    // 汇总不仅仅是求和 还有平均值 averagingInt averagingDouble averagingLong 
+    double avgCalories = menu.stream().collect(Collectors.averagingInt(Dish::getCalories));
+    // 有时候我希望通过一次收集器 就把所有的 max min avg 等等信息拿到
+    // 我们可以使用summarizingInt 来完成 
+    IntSummaryStatistics menuStatistics = menu.stream().collect(Collectors.summarizingInt(Dish::getCalories));
+    // 同样的LongSummaryStatistics DoubleSummaryStatistics 用来收集Long 和 Double
+    
+```
+- 连接字符串
+- joining工厂方法的收集器会把流中每一个对象应用toString方法得到的字符串串连接成一个字符串
+```
+    String dishNameString = menu.stream().map(Dish::getName).collect(joining());
+    // 这里需要说明一下 如果Dish中的toString() 方法就是返回菜肴的名称 那么我们可以直接这样写
+    String dishNameString = menu.stream().collect(joining());
+    // 如果你需要在其中进行一个分隔符的添加的话 你就需要使用Collectors.joining(", ");
+    String dishNameString = menu.stream().collect(joining(", "));
+```
 
 
 
