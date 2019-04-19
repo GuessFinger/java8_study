@@ -729,11 +729,78 @@ stream支持filter方法 该操作会接受一个谓词(一个返回值为boolea
 ```
 
 
+#### 2019-4-19 09:55:39
+- day08 
+- 事实上我们基本上已经讨论了所有的收集器 都是一个可以用reducing工厂方法定义的归约过程的特殊情况而已
+- 书中表述的概念就是 其他的方法就是一个具体的 能够表明具体是干什么用的  reducing方法就是总体来说的东西
+```
+    int totalCalories = menu.stream().collect(Collectors.reducing(0,Dish::getCalorise,(i,j) -> i + j));
+    // 同样我们可以使用reducing来找到热量最高的菜肴
+    Optional<Dish> mostCalories = menu.stream().collect(Collectors.reducing(
+                      (d1, d2) -> d1.getCalories() > d2.getCalories() ? d1 : d2));
+```
 
+- 分组：还有一个我们常见的业务场景就是对集合中的项目进行分组操作  这个就是第一章其中的内容，如果我们现在
+    需要按照菜肴的种类进行分类的话 按照以往的指令化代码 代码会非常的麻烦 啰嗦 如果我们按照函数式的方法
 
+```
+    Map<Dish.Type,List<Dish>> dishesByType = menu.stream().collect(Collectors.groupingBy(Dish::getType));
 
+```
+![groupby实例](./images/groupingBy实例.png)
+- 上面的分类条件可能比较简单一点 我们可以做一个稍微复杂一点的分类操作 比如按照calories的大小分为normal diet fat
+```
+    public enum CaloriesLevel {DIET,NORMAL,FAT};
+    Map<CaloriesLevel,List<Dish>> dishByCaloriesLevel = menu.stream()
+                        .collect(Colllectors.groupingBy(
+                        dish -> {
+                            if(dish.getCalories() <= 400 return CaloriesLevel.DIET);
+                            else if(dish.getCalories() <= 700) return CaloriesLevel.NORMAL;
+                            else return CaloriesLevel.FAT;
+                        }));
+    // 感觉上面的重点就是如何 为你自定义的分组类型进行逻辑梳理 
+``` 
 
+- 感觉这个好像在调试的时候不太好调试 所以你中间要梳理清楚你写的是怎么样的代码
+- 多级分组 实现多级分组 我们基本的策略就是将内层的的groupingBy 传递给外层的groupingBy 
+    在按照类型分类的基础上 然后再按能量进行区分。groupingBy(第一个分组规则，groupingBy(第二个分组规则))
 
+```
+    Map<Dish.Type, Map<CaloriesLevel, List<Dish>>> dishByTypeCalories = 
+        menu.stream()
+            .collect(Collectors.groupingBy(
+                Dish::Type,groupingBy(dish -> {
+                 if(dish.getCalories() <= 400 return CaloriesLevel.DIET);
+                    else if(dish.getCalories() <= 700) return CaloriesLevel.NORMAL;
+                    else return CaloriesLevel.FAT;
+                })));
 
+```
+![多级分组说明图](./images/多级分组说明图.png)
 
+- 按子组收集数据 我们上面的例子就是把第二个groupingBy收集器传递给外层的收集器完成多级分组的功能
+    但是进一步说 传递给第一个groupingBy的第二个收集器可以是任意类型的 不一定是groupingBy
+    例如数一数每类菜有多少种？ 注意groupingBy是外层的传递给里层
+`Map<Dish.Type, Long> typesCount = menu.stream().collect(Collectors.groupingBy(Dish::getType, Collectors.counting()));`
+
+- 需要我们注意的是 普通的单参数groupingBy(f) 其中f是分类函数 实际上是groupingBy(f,Comparators.toList())的简便写法；
+
+```
+    Map<Dish.Type,Optional<Dish>> mostCaloriesByType = menu.stream()
+                                                            .collect(groupingBy(Dish::getType,
+                                                            maxBy(comparingInt(Dish::getCalories))));
+    // 书中进行了一定的说明 就是我只有groupingBy生效的基础上 才会有后面的操作 所以这里的Optional<Dish> 不是很有效  
+    // 因为maxBy返回的就是一个Optional<Dish> 类型  我们更希望它直接返回Dish类型
+    Map<Dish.Type,Dish> mostCaloriesByType = menu.stream()
+                                                   .collect(Collectors.groupingBy(Dish::getType),
+                                                   Collectors.collectingAndThen(maxBy(ComparingInt(Dish::getCalories),
+                                                    Optional::get)));
+    // 这个工厂方法接受两个参数 要转换的收集器以及转换函数 并返回另一个收集器
+                                                    
+```
+![groupingBy深度说明](./images/groupingBy深度说明.png)
+![嵌套收集器说明](./images/嵌套收集器说明图.png)
+
+- 与groupingBy联合使用的其他收集器的例子
+- 一般来说，通过groupingBy工厂方法的第二个参数传递的收集器将会到分到同一组中所有流元素执行进一步的规约操作。
 
