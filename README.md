@@ -803,4 +803,79 @@ stream支持filter方法 该操作会接受一个谓词(一个返回值为boolea
 
 - 与groupingBy联合使用的其他收集器的例子
 - 一般来说，通过groupingBy工厂方法的第二个参数传递的收集器将会到分到同一组中所有流元素执行进一步的规约操作。
+#### 2019年4月22日19:51:15
+- day09
+- 我们还可以根据不同的类型 求出菜肴的总热量
+```
+    Map<Dish.Type,Integer> totalCaloriesByType = menu.stream().collect(
+                                groupingby(Dish::getType,
+                                summingInt(Dish::getCalories)));
+    // 然而和grouping经常联合使用的是mapping  举例说明就是 你想知道不同类型的菜肴都是哪些CaloriesLevel
+    Map<Dish.Type, Set<CaloriesLevel>>   caloriesLevelByType = menu.stream()
+                                .cllect(groupingBy(Dish::getType,mapping(
+                                dish -> {if (dish.getCalories() <=400) return CaloriesLevel.DIET;
+                                else if(dish.getCalores() <=700) return CaloriesLevel.NORMAL;)
+                                eles retun CaloriesLevel.FAT;),Collectors.toSet() )))                 
+    // 这里的结果就是类似
+    {OTHER=[DIET, NORMAL], MEAT=[DIET, NORMAL, FAT], FISH=[DIET, NORMAL]}
+```
+
+- 分区：是分组的特殊情况 由一个谓词(返回boolean类型的函数) 作为分类函数 它称为分区函数 这个潜台词就是
+    Map 只有两个键 一个是true  一个false
+```
+    Map<Boolean, List<Dish>> partitionedMenu = menu.stream().collect(
+                            partitioningBy(Dish::isVegetarian));
+    // 返回的实例 大概的样子
+    {false=[pork, beef, chicken, prawns, salmon],
+    true=[french fries, rice, season fruit, pizza]}
+```
+- 分区的优势 就是我们保留了两组数据 一组是素食 一组是非素食
+```
+    // 像下面的代码 就是处理完全是素食的食材
+    List<Dish> isVegetarian = menu.stream().filter(Dish::getVegetarian).collect(Collectors.toList());
+    // 我们还可以将分区传递给下一个分组
+    Map<Boolean, Map<Dish.Type,List<Dish>>> vegetarianDishesByType = menu.stream().collect(
+                                            partitioningBy(Dish::getVegetarian),
+                                            groupingBy(Dish::getType));
+    // 产生的是一个二级分组map
+    {false={FISH=[prawns, salmon], MEAT=[pork, beef, chicken]},....
+    // 我们同样可以找到素食和非素食中热量最高的菜肴
+    Map<Boolean,Dish> mostCaloriesPartitionByVegetarian = menu.stream().collect(
+                                        partitioningBy(Dish::getVegetarian),
+                                        collectionAndThen(Comparator.comparingInt(Dish::getCalories)),
+                                        Optional::get)));
+    
+```
+- Collectors的静态方法截图
+![Collectors静态工厂方法1](./images/Collectors类的静态工厂方法1.png)
+![Collectors静态工厂方法2](./images/Collectors类的静态工厂方法2.png)
+
+- 自己创建收集器 这里我没有进行学习 回头想要学习的话 记得查看6.6章节
+
+![为什么要引入并行处理流](./images/为什么要引入并行处理流.png)
+
+- 怎么理解这个并行处理流：并行流就是一个把内容分为多个数据块，并用不同的线程分别处理每个数据流，这样一来你就可以
+    自动把给定操作的工作负荷分配给多核处理器的内核 让他们都忙起来
+
+---
+![并行处理举例说明](./images/并行流的举例说明图.png)
+---
+![并行处理线程池](./images/并行处理线程池.png)
+--- 
+![iterate本质上是顺序的](./images/iterate本质上是顺序的.png)
+
+--- 
+![是否使用并行流说明1](./images/是否使用并行流说明1.png)
+![是否使用并行流说明2](./images/是否使用并行流说明2.png)
+
+- 分支/合并框架：目的就是以递归的方式将可以并行的任务拆分成更小的任务 然后将每个子任务的结果合并起来生成整体的结果
+   它是ExecutorService接口的一个实现 它把子任务分给线程池（ForkJoinPool）中的工作线程
+
+
+
+
+
+
+
+
 
