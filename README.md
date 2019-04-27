@@ -975,3 +975,100 @@ stream支持filter方法 该操作会接受一个谓词(一个返回值为boolea
     3.最后如果还是没有办法判断的话 继承多接口的类必须通过显示的覆盖和调用期望的方法 显示的选择使用哪一个
         默认方法的实现
 - 具体的请查看C类
+
+- 还有一种就是关于菱形继承问题的
+```java
+    public interface A{
+        default void hello(){
+            System.out.println("say hello from A");
+        }
+    }
+    
+    public interface B extends  A{ }
+    public interface C extends  A{ }
+    public class  D implements B ,C{
+        public static void main(String[] args){
+            new D().hello();
+        }
+    } 
+    
+    // 上面的如果你画一个UML图 就可以发现这是一个菱形的继承图
+    // 分析来看因为B C 都没有显式的写出实现 所以最打印的还是A中的hello方法
+    // 如果我们在B 中重写 A 的方法 那么打印的就是 B中的 根据规则1
+    // 如果我们在C 中重写 A 的方法 那么你就要使用 B.super.hello()/A.super.hello() 显式的说明你要调用谁
+
+```
+
+- 了解信息
+![c++中的菱形问题](./images/C++菱形问题.png)
+
+#### 2019年4月25日22:51:55
+- day12
+- 在之前的代码中经常会有一个问题 就是我们需要处理空指针异常 这个异常键值不要太常见了 反正你需要时刻的注意这个问题
+    一种业务场景就是不断的依托的形式 就是现在的业务依托上面的业务的返回 然后下面的业务依托刚才的业务
+    那你就需要进行多成判断了 如果一个为空 那么你空调用业务一定返回的是空  
+- 对于代码中有空的引起的一些问题
+    它是错误之源 是目前开发中最典型的异常
+    它使你的代码充斥着深层嵌套的null检查代码的可读性不叫糟糕
+    它本身没是没有任何意义的
+    它破坏了java的哲学 书中说java一直避免让java的开发人员意识到指针的存在
+- 综上所述 我们在java8中 引入了一个Optional类
+
+- 比如我们使用Optional<Car> 只是对类进行简单的封装 变量不存在的时候 确实的值会被建模成一个 空 的Optional对象
+    由Optional.empty();
+
+#### 2019年4月27日18:50:11
+- day 12
+- 使用Optional而不是null的一个非常重要而实际的语义区别 我们在使用的时候 用Optional<Car> 就表明这里发生变量缺失是
+    允许的 相反的 如果你使用Car 这个变量如果这个图变量是null  那么你就要对这个变量进行业务逻辑处理
+    
+- 使用Optional的简单实例 可以查看day12中的额Insurance
+
+- 我们现在开始学习使用Optional 创建Optional对象
+
+![使用Optional来处理连续引用的空指针的问题](./images/使用Optional来处理连续引用的空指针的问题.png)
+![上图解释说明文字](./images/上图解释说明文字.png)
+
+- 这个类设计之初 没有考虑其中像在类中使用的这种情况 我在day12中定义的Car类中Insurance这种写法
+![optional无法进行序列化](./images/optional无法进行序列化.png)
+
+- 默认行为以及解引用Optional对象 Optional类中提供了多种方法读取其中的值
+```
+    Optional<Car> carOptiona = Optional.of(new Car());
+  // get() 方法是最简单又是对不安全的 如果变量存在则之间返回存在变量中的值 否则就抛出一个
+  // NoSuchElementException的异常 如果你非常确定Optional中是有值的 要不然尽量不要使用
+  // 这个方法
+    carOptional.get();
+  // orElse() 这个允许你在Optional值不包含值的时候 提供一个默认值
+    ....orElse("unknown");
+  // orElseGet(Supplier<? extends T> other) 是orElse()方法的延迟调用版 如果创建默认值是一件非常耗时的事情
+  // 那么我们可以用这个方法 或者你非常确定某个方法仅在Optional为空的时候调用
+  // 下面的也可以写成方法 在里面进行调用
+    ...orElseGet((Supplier<String>)() -> "xxx") 
+  // orElseThrow(Supplier<? extends X> exceptionSupplier) 和get方法类似  抛出一个异常 
+  // 我们使用这个的目的就是定制自己的异常类 和上面的方法是类似的
+  
+  // ifPresent(Consumer<? super T>) 能让你在变量值存在的时候执行一个作为参数传入的方法
+```
+- 两个Optional对象的组合
+![优化Optional操作](./images/优化Optional操作.png)
+
+```
+    // 如果你想查找找 德玛西亚 保险公司
+    if(insurance != null && "德玛西亚".equals(insurance.getName())){System.out.println("ok");}
+    // 如果我们使用 Optional的操作
+    Optional<Insurance> optInsurance = ....;
+    optInsurance.filter(insurance -> "德玛西亚".equals(insurance.geName()))
+                .ifPresent(() -> System.out.println("ok"));
+    // filter 可值钱一样接受一个谓词 如果它符合谓词的条件 那么返回这个对象 我们之前说个Optional对象可以
+    // 当做只有一个对象的stream  如果对象为空 不进行任何操作 如果不为空谓词操作为true  也不进行任何处理
+    // 这及返回该Optional对象
+```
+![optional中的方法](./images/optional中的方法.png)
+---
+![optional实例](./images/optional实例.png)
+![optional实例2](./images/optional实例2.png)
+ 
+ 
+
+    
