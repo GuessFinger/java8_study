@@ -12,6 +12,9 @@ public class TimeDemo3 {
         // 如果我们现在已经有两个一个LocalDate对象 我们想要创建一个他的修改版本 最简单的方法
         // 就是使用withAttribute方法  这个方法会创建一个对象的副本 注意我们前面说过 之前穿件
         // 的时间对象都是不可变的 所以使用这个方法后 都是新创建一个对象 不会修改原来的对象
+        // 一般来说我们之前学习的日期类 都是可以使用get 和with 方法 但是对于不能使用的
+        // 比如之前说的 Instant.get(LocalDate) 因为Instant表示的是一个机器时间  它不能识别我们
+        // 人类比较方便的语言
         LocalDate localDate = LocalDate.of(2019, 5, 12);
         LocalDate localDate1 = localDate.withYear(2020);
         LocalDate localDate2 = localDate1.withDayOfMonth(6);
@@ -24,5 +27,6 @@ public class TimeDemo3 {
         LocalDate localDate5 = localDate3.plusWeeks(2);
         LocalDate localDate6 = localDate5.minusYears(2);
         LocalDate localDate7 = localDate6.plus(6, ChronoUnit.MONTHS);
+
     }
 }
